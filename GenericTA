@@ -1,0 +1,184 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © BillionaireLau
+
+//@version=5
+
+// @description TODO: add library description here
+library("GenericTA")
+
+
+//List of indicators
+
+//ema_cross
+//f_highest
+//f_lowest
+//macd                                                             //src = input(title="Source", defval=close)   fast_length = input(title="Fast Length", defval=12)  slow_length = input(title="Slow Length", defval=26)  signal_length = input.int(title="Signal Smoothing",  minval = 1, maxval = 50, defval = 9)     sma_source = input.string(title="Oscillator MA Type",  defval="EMA", options=["SMA", "EMA"])
+//sar(float start, float increment, float maximum)                 //start = input(0.01,group="SAR settings") increment = input(0.01,group="SAR settings") maximum = input(0.4, 'Max Value',group="SAR settings")
+//supertrend(float Factor, simple int Pd)                          //Factor=input(3,title="[ST] Factor", minval=1,maxval = 100, type=input.float) Pd=input(7, title="[ST] PD", minval=1,maxval = 100)
+
+
+
+
+
+
+
+
+
+
+
+
+// @function TODO: add function description here
+// @param x TODO: add parameter x description here
+// @returns TODO: add what function returns
+export fun(float x) =>
+	//TODO : add function body and return value here
+	x
+
+
+
+
+export f_highest(float _source, int _length) =>
+    float _return = _source
+    if _length >= 1 and _length <= 5000
+        for _i = 0 to math.max(0, _length-1)
+            _return := math.max(_source[_i], _return)
+    _return
+
+export f_lowest(float _source, int _length) => 
+    float _return = _source
+    if _length >= 1 and _length <= 5000
+        for _i = 0 to math.max(0, _length-1)
+            _return := math.min(_source[_i], _return)
+    _return
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+src_macd = input(title="Source", defval=close)   
+fast_length_macd = input(title="Fast Length", defval=12)  
+slow_length_macs = input(title="Slow Length", defval=26)  
+signal_length = input.int(title="Signal Smoothing",  minval = 1, maxval = 50, defval = 9)     
+sma_source_macd = input.string(title="Oscillator MA Type",  defval="EMA", options=["SMA", "EMA"])
+
+
+export macd(float _source, int _lenFast, int _lenSlow, int _lenSingal, string _type_of_ma) =>
+    fast_ma = _type_of_ma == "SMA" ? ta.sma(_source, _lenFast) : ta.ema(_source, _lenFast)
+    slow_ma = _type_of_ma == "SMA" ? ta.sma(_source, _lenSlow) : ta.ema(_source, _lenSlow)
+    macd = fast_ma - slow_ma
+    signal = _type_of_ma == "SMA" ? ta.sma(macd, _lenSingal) : ta.ema(macd, _lenSingal)
+    hist =  macd - signal
+    [macd, signal,hist]
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+start_sar = input(0.01,group="SAR settings")
+increment_sar = input(0.01,group="SAR settings")
+maximum_sar = input(0.4, 'Max Value',group="SAR settings")
+
+// @function you need to add the following inputs function to your script also:start = input(0.01,group="SAR settings") increment = input(0.01,group="SAR settings") maximum = input(0.4, 'Max Value',group="SAR settings")
+// @param 
+// @
+export sar(float start, float increment, float maximum) =>
+    var bool uptrend = na
+    var float EP = na
+    var float SAR = na
+    var float AF = start
+    var float nextBarSAR = na
+    if bar_index > 0
+        firstTrendBar = false
+        SAR := nextBarSAR
+        if bar_index == 1
+            float prevSAR = na
+            float prevEP = na
+            lowPrev = low[1]
+            highPrev = high[1]
+            closeCur = close
+            closePrev = close[1]
+            if closeCur > closePrev
+                uptrend := true
+                EP := high
+                prevSAR := lowPrev
+                prevEP := high
+                prevEP
+            else
+                uptrend := false
+                EP := low
+                prevSAR := highPrev
+                prevEP := low
+                prevEP
+            firstTrendBar := true
+            SAR := prevSAR + start * (prevEP - prevSAR)
+            SAR
+        if uptrend
+            if SAR > low
+                firstTrendBar := true
+                uptrend := false
+                SAR := math.max(EP, high)
+                EP := low
+                AF := start
+                AF
+        else
+            if SAR < high
+                firstTrendBar := true
+                uptrend := true
+                SAR := math.min(EP, low)
+                EP := high
+                AF := start
+                AF
+        if not firstTrendBar
+            if uptrend
+                if high > EP
+                    EP := high
+                    AF := math.min(AF + increment, maximum)
+                    AF
+            else
+                if low < EP
+                    EP := low
+                    AF := math.min(AF + increment, maximum)
+                    AF
+        if uptrend
+            SAR := math.min(SAR, low[1])
+            if bar_index > 1
+                SAR := math.min(SAR, low[2])
+                SAR
+        else
+            SAR := math.max(SAR, high[1])
+            if bar_index > 1
+                SAR := math.max(SAR, high[2])
+                SAR
+        nextBarSAR := SAR + AF * (EP - SAR)
+        nextBarSAR
+    [SAR, uptrend]
+    
+
+// @function you need to add the following inputs function to your script also://Factor=input(3,title="[ST] Factor", minval=1,maxval = 100, type=input.float) Pd=input(7, title="[ST] PD", minval=1,maxval = 100)
+// @param 
+// @
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+Factor_st =input.int(3,title="[ST] Factor", minval=1,maxval = 100)
+Pd_st =input.int(7, title="[ST] PD", minval=1,maxval = 100)
+
+
+
+export supertrend(float Factor, simple int Pd) =>
+    Up=hl2-(Factor*ta.atr(Pd))
+    Dn=hl2+(Factor*ta.atr(Pd))
+    TrendUp = 0.0
+    TrendUp := close[1]>TrendUp[1] ? math.max(Up,TrendUp[1]) : Up
+    TrendDown = 0.0
+    TrendDown := close[1]<TrendDown[1]? math.min(Dn,TrendDown[1]) : Dn
+    Trend = 0.0
+    Trend := close > TrendDown[1] ? 1: close< TrendUp[1]? -1: nz(Trend[1],1)
+    Tsl = Trend==1? TrendUp: TrendDown
+    S_Buy = Trend == 1 ? 1 : 0
+    S_Sell = Trend != 1 ? 1 : 0
+    
+    [Trend, Tsl]
