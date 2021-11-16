@@ -1,0 +1,214 @@
+//@version=5
+library("GenericTrading", overlay=false)
+
+
+
+
+
+//List of indicators
+
+//Type A: Return bar index
+
+//get_most_recent_long_or_short_position_closed_index()=>
+//get_most_recent_long_or_short_position_open_index()=>
+//timeSinceLastEntry()=>
+
+
+//Type B: Return overall average performance
+
+//avgBarsInTrade() =>   
+//avgGrossProfit() =>        
+//avgOpenPositionPrice() =>
+//avgProfitInPercent() =>
+//avgTradeDuration() =>
+
+
+//Type C: Return outlier values 
+
+//maxTradeDrawDown() =>
+//maxTradeRunUp() =>
+
+
+//Type D: Return gross values performance
+
+//tradeOpenPL() =>
+//tradeOpenPLGross() =>
+
+
+
+
+//Sample strategy: MACD (long / short / both sides)
+
+fastLength = input(12)
+slowlength = input(26)
+MACDLength = input(9)
+MACD = ta.ema(close, fastLength) - ta.ema(close, slowlength)
+aMACD = ta.ema(MACD, MACDLength)
+delta = MACD - aMACD
+
+enableLong = input(true,title="enable long?")
+enableShort = input(true,title="enable short?")
+
+if (ta.crossover(delta, 0)) and enableLong
+	strategy.entry("MacdLE", strategy.long, comment="MacdLE")
+if (ta.crossunder(delta, 0)) and enableShort
+	strategy.entry("MacdSE", strategy.short, comment="MacdSE")
+//plot(strategy.equity, title="equity", color=color.red, linewidth=2, style=plot.style_areabr)
+if (ta.crossover(delta, 0)) and not enableLong
+	strategy.close_all()
+if (ta.crossunder(delta, 0)) and not enableShort
+	strategy.close_all()
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+//Type A: Return bar index
+
+
+
+export get_most_recent_long_or_short_position_closed_index()=>
+    It_is_long = strategy.position_size>0 and strategy.position_size[1]<=0
+    Counter_reset = math.max(0,ta.barssince(barstate.isfirst)-strategy.closedtrades.exit_bar_index(strategy.closedtrades-1) ) == 0
+    mrl_index = 0  ////Last index since long position closed
+    mrl_index := It_is_long and Counter_reset ?0: mrl_index[1]+1
+    mrs_index = 0  //Last index since short position closed
+    mrs_index := not It_is_long and Counter_reset ? 0: mrs_index[1]+1
+    [mrl_index,mrs_index]
+
+
+export get_most_recent_long_or_short_position_open_index()=>
+    It_is_long = strategy.position_size>0 and strategy.position_size[1]<=0
+    Counter_reset =  (bar_index - strategy.opentrades.entry_bar_index(strategy.opentrades-1)) == 0
+    Holding_position = strategy.opentrades > 0 
+    mrl_index = 0  ////Last index since long position closed
+    mrl_index := It_is_long and Counter_reset and Holding_position ? 0: mrl_index[1]+1
+    mrs_index = 0  //Last index since short position closed
+    mrs_index :=not It_is_long and Counter_reset and Holding_position? 0: mrs_index[1]+1
+    [mrl_index,mrs_index]
+
+
+export timeSinceLastEntry()=>
+    strategy.opentrades > 0 ? (time - strategy.opentrades.entry_time(strategy.opentrades-1)) : na
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//Type B: Return overall average performance
+
+
+export avgBarsInTrade() =>
+    result = 0
+    for i = 0 to strategy.closedtrades-1
+        result += strategy.closedtrades.exit_bar_index(i) - strategy.closedtrades.entry_bar_index(i) + 1
+    math.round(strategy.closedtrades > 0 ? result / strategy.closedtrades : na)
+
+
+
+
+export avgGrossProfit() =>
+    result = 0.
+    for i = 0 to strategy.closedtrades-1
+        result += strategy.closedtrades.profit(i) + strategy.closedtrades.commission(i)
+    strategy.closedtrades > 0 ? result / strategy.closedtrades : na
+
+
+export avgOpenPositionPrice() =>
+    result = 0.
+    for i = 0 to strategy.opentrades-1
+        result += strategy.opentrades.entry_price(i) * strategy.opentrades.size(i) / strategy.position_size
+    strategy.opentrades > 0 ? result / strategy.opentrades : na
+
+
+export avgProfitInPercent() =>
+    profitInPercent = 0.
+    for i = 0 to strategy.closedtrades-1
+        entryP = strategy.closedtrades.entry_price(i)
+        exitP = strategy.closedtrades.exit_price(i)
+        profitInPercent += (exitP - entryP) / entryP * strategy.closedtrades.size(i)
+    avgProfitInPercent = strategy.closedtrades > 0 ? profitInPercent / strategy.closedtrades * 100 : na
+    avgProfitInPercent
+
+export avgTradeDuration() =>
+    result = 0
+    for i = 0 to strategy.closedtrades-1
+        result += strategy.closedtrades.exit_time(i) - strategy.closedtrades.entry_time(i)
+    strategy.closedtrades > 0 ? result / strategy.closedtrades : na
+
+
+
+
+
+//Type C: Return outlier values 
+
+export maxTradeDrawDown() =>
+    result = 0.
+    for i = 0 to strategy.closedtrades-1
+        result := math.max(result, strategy.closedtrades.max_drawdown(i))
+    result
+
+
+
+export maxTradeRunUp() =>
+    result = 0.
+    for i = 0 to strategy.closedtrades-1
+        result := math.max(result, strategy.closedtrades.max_runup(i))
+    result
+
+
+
+
+
+//Type D: Return gross values performance
+
+
+export tradeOpenPLGross() =>
+    result = 0.
+    for i = 0 to strategy.opentrades-1
+        result += strategy.opentrades.profit(i)+strategy.opentrades.commission(i)
+    result
+
+
+export tradeOpenPL() =>
+    result = 0.
+    for i = 0 to strategy.opentrades-1
+        result += strategy.opentrades.profit(i)
+    result
+
+
+[a,b]=get_most_recent_long_or_short_position_open_index()
+
+[c,d]=get_most_recent_long_or_short_position_closed_index()
+
+//bgcolor(strategy.position_size>0 and strategy.position_size[1]<=0?color.red:na)
+//bgcolor(math.max(0,ta.barssince(barstate.isfirst)-strategy.closedtrades.exit_bar_index(strategy.closedtrades-1) ) == 0?color.green:na)
+plot(a)
+plot(b,color=color.yellow)
+
+
+plot(c,color=color.red)
+plot(d,color=color.green)
