@@ -1,0 +1,339 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © BillionaireLau
+//@version=5
+indicator("Universal logarithmic growth curves, with support and resistance", overlay = true, max_lines_count = 500)
+
+
+
+//Script description: 
+//This script is intended to provide a better version of the logarithmic curve, to fix the current issues of bitcoins traders.
+//In the public library there is a hardcoded logarithmic growth curve by @quantadelic.
+//That curve was hardcoded by his manual inputs. Which makes the curve stop updating its value since 2019 the date he publish that code. 
+//Many users of that script out there based on @quantadelic version of "bitcoin logarithmic growth curves" and they tried their best to update the coordinates of it because his manual data is outdated.
+//A lot of "Bitcoin growth curve scripts that are available in the public library. Thus it generates a lot of redundant scripts in the public libraries. 
+//This script is designed to solve this issue. Instead of a hardcoded bitcoin no-update script. This script is universal and designed to be usable in all tickers.
+
+//It is automatic, linear adjustable, levels and zones are customizable, support and resistance levels are highlighted.
+
+//Inputs:
+//Steps of drawing: By default, it is 10. Normally you won't change it unless there are display problems
+//For those who want to forcefully adjust the shape of these lines (which is not suggested), this script also opened the options for you.
+//Linear lift up: vertically lift up the whole set of lines. By linear multiplication. 
+//Curvature constant: It is the base value of the exponential transform before converting it back to the chart and plotting it. A bigger base value will make a more upward curvy line. 
+//
+
+//Errors: 
+// 1) Bar Index value of the 'x2' argument (-121.000000) in 'line.set_x***()' is too far from the current bar index.
+// Fixes: 
+// Option 1: Turn to manual method and input a smaller range. 
+// Option 2: Use "Weekly" timeframe, which has less bars in the chart.
+
+import BillionaireLau/GenericTA/3 as gta
+
+src = input(close, title = "Source")
+
+//Methods input
+string method = input.string("Automatic", options=["Automatic","Manual"],group="Methods")
+cover_period = input(5000,title="(Optional) Range under manual method",group="Methods")
+block_no = method=="Automatic"?last_bar_index - 1:cover_period
+steps_cal = input(10, title="steps of drawings (won't change it unless there is display problems)")
+
+//Colors input
+line_colorRes = input.color(color.red,title="resistance level color",group="Colors")
+line_colorSup = input.color(color.green,title="support level color",group="Colors")
+line_colorOth = input.color(color.yellow,title="other line color",group="Colors")
+
+var line[] reg_line_array = array.new_line()
+var line[] line1array = array.new_line()
+var line[] line2array = array.new_line()
+var line[] line3array = array.new_line()
+var line[] line4array = array.new_line()
+var line[] line5array = array.new_line()
+var line[] line6array = array.new_line()
+var line[] line7array = array.new_line()
+var line[] line8array = array.new_line()
+var line[] line9array = array.new_line()
+var line[] line10array = array.new_line()
+var line[] line11array = array.new_line()
+var line[] line12array = array.new_line()
+var line[] line13array = array.new_line()
+var line[] line14array = array.new_line()
+
+
+var label r1_label = label.new(x = na, y = na, style =  label.style_none, color = #00000000, textcolor = color.blue, size=size.normal, textalign = text.align_center)
+var label r2_label = label.new(x = na, y = na, style =  label.style_none, color = #00000000, textcolor = color.blue, size=size.normal, textalign = text.align_center)
+var label r3_label = label.new(x = na, y = na, style =  label.style_none, color = #00000000, textcolor = color.blue, size=size.normal, textalign =  text.align_center)
+var label r4_label = label.new(x = na, y = na, style =  label.style_none, color = #00000000, textcolor = color.blue, size=size.normal, textalign =  text.align_center)
+var label r5_label = label.new(x = na, y = na, style =  label.style_none, color = #00000000, textcolor = color.blue, size=size.normal, textalign =  text.align_center)
+var label r6_label = label.new(x = na, y = na, style =  label.style_none, color = #00000000, textcolor = color.blue, size=size.normal, textalign = text.align_center)
+var label r7_label = label.new(x = na, y = na, style =  label.style_none, color = #00000000, textcolor = color.blue, size=size.normal, textalign =  text.align_center)
+var label r8_label = label.new(x = na, y = na, style =  label.style_none, color = #00000000, textcolor = color.blue, size=size.normal, textalign =  text.align_center)
+var label r9_label = label.new(x = na, y = na, style =  label.style_none, color = #00000000, textcolor = color.blue, size=size.normal, textalign =  text.align_center)
+var label r10_label = label.new(x = na, y = na, style =  label.style_none, color = #00000000, textcolor = color.blue, size=size.normal, textalign =  text.align_center)
+var label r11_label = label.new(x = na, y = na, style =  label.style_none, color = #00000000, textcolor = color.blue, size=size.normal, textalign =  text.align_center)
+var label r12_label = label.new(x = na, y = na, style =  label.style_none, color = #00000000, textcolor = color.blue, size=size.normal, textalign =  text.align_center)
+var label r13_label = label.new(x = na, y = na, style =  label.style_none, color = #00000000, textcolor = color.blue, size=size.normal, textalign =  text.align_center)
+var label r14_label = label.new(x = na, y = na, style =  label.style_none, color = #00000000, textcolor = color.blue, size=size.normal, textalign =  text.align_center)
+
+
+
+float[] a1array = array.new_float()
+float[] a2array = array.new_float()
+float[] a3array = array.new_float()
+float[] a4array = array.new_float()
+float[] a5array = array.new_float()
+float[] a6array = array.new_float()
+float[] a7array = array.new_float()
+float[] a8array = array.new_float()
+float[] a9array = array.new_float()
+float[] a10array = array.new_float()
+float[] a11array = array.new_float()
+float[] a12array = array.new_float()
+float[] a13array = array.new_float()
+float[] a14array = array.new_float()
+
+var int step = na
+var int line_n = na
+
+line_color = color.red
+
+if barstate.isfirst
+    line_n := math.min(block_no, 250)
+    for i = 0 to line_n - 1
+        array.unshift(reg_line_array, line.new(x1=na, y1=na, x2=na, y2=na, color=line_color))
+    if block_no > 5000
+        step := math.ceil(block_no / 750)
+    else
+        step := math.ceil(block_no / 250)
+    for i = 0 to math.floor(line_n / 2) - 1
+        array.unshift(line1array, line.new(x1=na, y1=na, x2=na, y2=na, color=line_color))
+        array.unshift(line2array, line.new(x1=na, y1=na, x2=na, y2=na, color=line_color))
+        array.unshift(line3array, line.new(x1=na, y1=na, x2=na, y2=na, color=line_color))
+        array.unshift(line4array, line.new(x1=na, y1=na, x2=na, y2=na, color=line_color))
+        array.unshift(line5array, line.new(x1=na, y1=na, x2=na, y2=na, color=line_color))
+        array.unshift(line6array, line.new(x1=na, y1=na, x2=na, y2=na, color=line_color))
+        array.unshift(line7array, line.new(x1=na, y1=na, x2=na, y2=na, color=line_color))
+        array.unshift(line8array, line.new(x1=na, y1=na, x2=na, y2=na, color=line_color))
+        array.unshift(line9array, line.new(x1=na, y1=na, x2=na, y2=na, color=line_color))
+        array.unshift(line10array, line.new(x1=na, y1=na, x2=na, y2=na, color=line_color))
+        array.unshift(line11array, line.new(x1=na, y1=na, x2=na, y2=na, color=line_color))
+        array.unshift(line12array, line.new(x1=na, y1=na, x2=na, y2=na, color=line_color))
+        array.unshift(line13array, line.new(x1=na, y1=na, x2=na, y2=na, color=line_color))
+        array.unshift(line14array, line.new(x1=na, y1=na, x2=na, y2=na, color=line_color))
+
+
+mul1 = input.float(1.5,title="stdev multipliers of top line (line 1)",group="Regression boundaries")
+mul14 = input.float(-1.5,title="stdev multipliers of bottom line (line 14)",group="Regression boundaries")
+
+fib1= mul1
+fib2= input.float(0.8541,title="fib level 2",group="Fib levels ")
+fib3= input.float(0.7639,title="fib level 3",group="Fib levels ")
+fib4= input.float(0.618,title="fib level 4",group="Fib levels ")
+fib5= input.float(0.5,title="fib level 5",group="Fib levels ")
+fib6= input.float(0.382,title="fib level 6",group="Fib levels ")
+fib7= input.float(0.382,title="fib level 7",group="Fib levels ")
+fib8= input.float(0.382,title="fib level 8",group="Fib levels ")
+fib9= input.float(0.2361,title="fib level 9",group="Fib levels ")
+fib10= input.float(0.1459,title="fib level 10",group="Fib levels ")
+fib11= input.float(0.0902,title="fib level 11",group="Fib levels ")
+fib12= input.float(0.0902,title="fib level 12",group="Fib levels ")
+fib13= input.float(0.0902,title="fib level 13",group="Fib levels ")
+fib14 = mul14
+
+mul2 = (mul1 - mul14)*fib2 - mul1
+mul3 = (mul1 - mul14)*fib3 - mul1
+mul4 = (mul1 - mul14)*fib4 - mul1
+mul5 = (mul1 - mul14)*fib5 - mul1
+mul6 = (mul1 - mul14)*fib6 - mul1
+mul7 = (mul1 - mul14)*fib7 - mul1
+mul8 = (mul1 - mul14)*fib8 - mul1
+mul9 = (mul1 - mul14)*fib9 - mul1
+mul10 = (mul1 - mul14)*fib10 - mul1
+mul11 = (mul1 - mul14)*fib11 - mul1
+mul12 = (mul1 - mul14)*fib12 - mul1
+mul13 = (mul1 - mul14)*fib13 - mul1
+
+
+
+lift_fact = input (1,title="linear lift up factor for the set of lines",group="Linear adjustments")
+incline = 1
+base = input (2.718,title="curvature constant for the set of lines, default: 2.718",group="Linear adjustments")
+
+
+
+var float[] price_array = array.new_float(block_no)
+var int[] x_array = array.new_int(block_no)
+array.unshift(price_array, src) 
+array.pop(price_array)
+array.unshift(x_array, bar_index)
+array.pop(x_array)
+if barstate.islastconfirmedhistory
+    [x_coor, slope, r_sq, dev] = gta.log_regress(x_array, price_array,2)
+    for i = 0 to array.size(x_coor) - 1
+        array.push(a1array, math.pow(base,array.get(x_coor, i) + mul1 * dev)*incline)
+        array.push(a2array, math.pow(base,array.get(x_coor, i) + mul2 * dev)*incline)
+        array.push(a3array, math.pow(base,array.get(x_coor, i) + mul3 *dev)*incline)   //
+        array.push(a4array, math.pow(base,array.get(x_coor, i)+ mul4 *dev)*incline)
+        array.push(a5array, math.pow(base,array.get(x_coor, i) + mul5 *dev)*incline)   //
+        array.push(a6array, math.pow(base,array.get(x_coor, i)+ mul6 *dev)*incline)
+        
+        array.push(a7array, math.pow(base,array.get(x_coor, i)+ mul7 *dev)*incline)
+        array.push(a8array, math.pow(base,array.get(x_coor, i)+ mul8 *dev)*incline)
+        array.push(a9array, math.pow(base,array.get(x_coor, i)+ mul9 *dev)*incline)
+        array.push(a10array, math.pow(base,array.get(x_coor, i)+ mul10 *dev)*incline)
+        array.push(a11array, math.pow(base,array.get(x_coor, i)+ mul11 *dev)*incline)
+        array.push(a12array, math.pow(base,array.get(x_coor, i)+ mul12 *dev)*incline)
+        array.push(a13array, math.pow(base,array.get(x_coor, i)+ mul13 *dev)*incline)
+        array.push(a14array, math.pow(base,array.get(x_coor, i)+ mul14 *dev)*incline)
+
+if barstate.islastconfirmedhistory
+    for i = 0 to array.size(a1array) - 2 - step by step * steps_cal 
+        //1
+        line.set_xy1(array.get(line1array, i / (step * steps_cal)), x=bar_index - i, y=math.pow(array.get(a1array, i),lift_fact))           
+        line.set_xy2(array.get(line1array, i / (step * steps_cal)), x=bar_index - i - step*steps_cal, y=math.pow(array.get(a1array, math.min(array.size(a1array)-2,i + step*steps_cal)),lift_fact))
+        //2
+        line.set_xy1(array.get(line2array, i / (step * steps_cal)), x=bar_index - i, y=math.pow(array.get(a2array, i),lift_fact))
+        line.set_xy2(array.get(line2array, i / (step * steps_cal)), x=bar_index - i - step*steps_cal, y=math.pow(array.get(a2array,  math.min(array.size(a1array)-2,i + step*steps_cal)),lift_fact))  
+        //3
+        line.set_xy1(array.get(line3array, i / (step * steps_cal)), x=bar_index - i, y=math.pow(array.get(a3array, i),lift_fact))      
+        line.set_xy2(array.get(line3array, i / (step * steps_cal)), x=bar_index - i - step*steps_cal, y=math.pow(array.get(a3array, math.min(array.size(a1array)-2,i + step*steps_cal)),lift_fact))  
+        //steps_cal
+        line.set_xy1(array.get(line4array, i / (step * steps_cal)), x=bar_index - i, y=math.pow(array.get(a4array, i),lift_fact))      
+        line.set_xy2(array.get(line4array, i / (step * steps_cal)), x=bar_index - i - step*steps_cal, y=math.pow(array.get(a4array,  math.min(array.size(a1array)-2,i + step*steps_cal)),lift_fact))  
+        //5
+        line.set_xy1(array.get(line5array, i / (step * steps_cal)), x=bar_index - i, y=math.pow(array.get(a5array, i),lift_fact))      
+        line.set_xy2(array.get(line5array, i / (step * steps_cal)), x=bar_index - i - step*steps_cal, y=math.pow(array.get(a5array, math.min(array.size(a1array)-2,i + step*steps_cal)),lift_fact))  
+        //6
+        line.set_xy1(array.get(line6array, i / (step * steps_cal)), x=bar_index - i, y=math.pow(array.get(a6array, i),lift_fact))      
+        line.set_xy2(array.get(line6array, i / (step * steps_cal)), x=bar_index - i - step*steps_cal, y=math.pow(array.get(a6array, math.min(array.size(a1array)-2,i + step*steps_cal)),lift_fact))  
+        
+        
+        //7
+        line.set_xy1(array.get(line7array, i / (step * steps_cal)), x=bar_index - i, y=math.pow(array.get(a7array, i),lift_fact))      
+        line.set_xy2(array.get(line7array, i / (step * steps_cal)), x=bar_index - i - step*steps_cal, y=math.pow(array.get(a7array, math.min(array.size(a1array)-2,i + step*steps_cal)),lift_fact))  
+        //8
+        line.set_xy1(array.get(line8array, i / (step * steps_cal)), x=bar_index - i, y=math.pow(array.get(a8array, i),lift_fact))      
+        line.set_xy2(array.get(line8array, i / (step * steps_cal)), x=bar_index - i - step*steps_cal, y=math.pow(array.get(a8array, math.min(array.size(a1array)-2,i + step*steps_cal)),lift_fact))  
+        //9
+        line.set_xy1(array.get(line9array, i / (step * steps_cal)), x=bar_index - i, y=math.pow(array.get(a9array, i),lift_fact))      
+        line.set_xy2(array.get(line9array, i / (step * steps_cal)), x=bar_index - i - step*steps_cal, y=math.pow(array.get(a9array, math.min(array.size(a1array)-2,i + step*steps_cal)),lift_fact))  
+        //10
+        line.set_xy1(array.get(line10array, i / (step * steps_cal)), x=bar_index - i, y=math.pow(array.get(a10array, i),lift_fact))      
+        line.set_xy2(array.get(line10array, i / (step * steps_cal)), x=bar_index - i - step*steps_cal, y=math.pow(array.get(a10array, math.min(array.size(a1array)-2,i + step*steps_cal)),lift_fact))  
+        //11
+        line.set_xy1(array.get(line11array, i / (step * steps_cal)), x=bar_index - i, y=math.pow(array.get(a11array, i),lift_fact))      
+        line.set_xy2(array.get(line11array, i / (step * steps_cal)), x=bar_index - i - step*steps_cal, y=math.pow(array.get(a11array, math.min(array.size(a1array)-2,i + step*steps_cal)),lift_fact))  
+        //12
+        line.set_xy1(array.get(line12array, i / (step * steps_cal)), x=bar_index - i, y=math.pow(array.get(a12array, i),lift_fact))      
+        line.set_xy2(array.get(line12array, i / (step * steps_cal)), x=bar_index - i - step*steps_cal, y=math.pow(array.get(a12array, math.min(array.size(a1array)-2,i + step*steps_cal)),lift_fact))  
+        //13
+        line.set_xy1(array.get(line13array, i / (step * steps_cal)), x=bar_index - i, y=math.pow(array.get(a13array, i),lift_fact))      
+        line.set_xy2(array.get(line13array, i / (step * steps_cal)), x=bar_index - i - step*steps_cal, y=math.pow(array.get(a13array, math.min(array.size(a1array)-2,i + step*steps_cal)),lift_fact))  
+        //14
+        line.set_xy1(array.get(line14array, i / (step * steps_cal)), x=bar_index - i, y=math.pow(array.get(a14array, i),lift_fact))      
+        line.set_xy2(array.get(line14array, i / (step * steps_cal)), x=bar_index - i - step*steps_cal, y=math.pow(array.get(a14array, math.min(array.size(a1array)-2,i + step*steps_cal)),lift_fact))  
+
+if barstate.islastconfirmedhistory
+    sup1 = close - math.pow(array.get(a1array, 0),lift_fact)>0?close - math.pow(array.get(a1array, 0),lift_fact):9999999
+    sup2 = close - math.pow(array.get(a2array, 0),lift_fact)>0?close - math.pow(array.get(a2array, 0),lift_fact):9999999
+    sup3 = close - math.pow(array.get(a3array, 0),lift_fact)>0?close - math.pow(array.get(a3array, 0),lift_fact):9999999
+    sup4 = close - math.pow(array.get(a4array, 0),lift_fact)>0?close - math.pow(array.get(a4array, 0),lift_fact):9999999
+    sup5 = close - math.pow(array.get(a5array, 0),lift_fact)>0?close - math.pow(array.get(a5array, 0),lift_fact):9999999
+    sup6 = close - math.pow(array.get(a6array, 0),lift_fact)>0?close - math.pow(array.get(a6array, 0),lift_fact):9999999
+    sup7 = close - math.pow(array.get(a7array, 0),lift_fact)>0?close - math.pow(array.get(a7array, 0),lift_fact):9999999
+    sup8 = close - math.pow(array.get(a8array, 0),lift_fact)>0?close - math.pow(array.get(a8array, 0),lift_fact):9999999
+    sup9 = close - math.pow(array.get(a9array, 0),lift_fact)>0?close - math.pow(array.get(a9array, 0),lift_fact):9999999
+    sup10 = close - math.pow(array.get(a10array, 0),lift_fact)>0?close - math.pow(array.get(a10array, 0),lift_fact):9999999
+    sup11 = close - math.pow(array.get(a11array, 0),lift_fact)>0?close - math.pow(array.get(a11array, 0),lift_fact):9999999
+    sup12 = close - math.pow(array.get(a12array, 0),lift_fact)>0?close - math.pow(array.get(a12array, 0),lift_fact):9999999
+    sup13 = close - math.pow(array.get(a13array, 0),lift_fact)>0?close - math.pow(array.get(a13array, 0),lift_fact):9999999
+    sup14 = close - math.pow(array.get(a14array, 0),lift_fact)>0?close - math.pow(array.get(a14array, 0),lift_fact):9999999
+    support_level = math.min(sup1,sup2,sup3,sup4,sup5,sup6,sup7,sup8,sup9,sup10,sup11,sup12,sup13,sup14)
+    //for resistance level
+    diff1 = close - math.pow(array.get(a1array, 0),lift_fact)<0?close - math.pow(array.get(a1array, 0),lift_fact):-9999999
+    diff2 = close - math.pow(array.get(a2array, 0),lift_fact)<0?close - math.pow(array.get(a2array, 0),lift_fact):-9999999
+    diff3 = close - math.pow(array.get(a3array, 0),lift_fact)<0?close - math.pow(array.get(a3array, 0),lift_fact):-9999999
+    diff4 = close - math.pow(array.get(a4array, 0),lift_fact)<0?close - math.pow(array.get(a4array, 0),lift_fact):-9999999
+    diff5 = close - math.pow(array.get(a5array, 0),lift_fact)<0?close - math.pow(array.get(a5array, 0),lift_fact):-9999999
+    diff6 = close - math.pow(array.get(a6array, 0),lift_fact)<0?close - math.pow(array.get(a6array, 0),lift_fact):-9999999
+    diff7 = close - math.pow(array.get(a7array, 0),lift_fact)<0?close - math.pow(array.get(a7array, 0),lift_fact):-9999999
+    diff8 = close - math.pow(array.get(a8array, 0),lift_fact)<0?close - math.pow(array.get(a8array, 0),lift_fact):-9999999
+    diff9 = close - math.pow(array.get(a9array, 0),lift_fact)<0?close - math.pow(array.get(a9array, 0),lift_fact):-9999999
+    diff10 = close - math.pow(array.get(a10array, 0),lift_fact)<0?close - math.pow(array.get(a10array, 0),lift_fact):-9999999
+    diff11 = close - math.pow(array.get(a11array, 0),lift_fact)<0?close - math.pow(array.get(a11array, 0),lift_fact):-9999999
+    diff12 = close - math.pow(array.get(a12array, 0),lift_fact)<0?close - math.pow(array.get(a12array, 0),lift_fact):-9999999
+    diff13 = close - math.pow(array.get(a13array, 0),lift_fact)<0?close - math.pow(array.get(a13array, 0),lift_fact):-9999999
+    diff14 = close - math.pow(array.get(a14array, 0),lift_fact)<0?close - math.pow(array.get(a14array, 0),lift_fact):-9999999
+    resistance_level = math.max(diff1,diff2,diff3,diff4,diff5,diff6,diff7,diff8,diff9,diff10,diff11,diff12,diff13,diff14)    
+    line_color1 = diff1==resistance_level?line_colorRes:sup1==support_level?line_colorSup:line_colorOth
+    line_color2 = diff2==resistance_level?line_colorRes:sup2==support_level?line_colorSup:line_colorOth
+    line_color3 = diff3==resistance_level?line_colorRes:sup3==support_level?line_colorSup:line_colorOth
+    line_color4 = diff4==resistance_level?line_colorRes:sup4==support_level?line_colorSup:line_colorOth
+    line_color5 = diff5==resistance_level?line_colorRes:sup5==support_level?line_colorSup:line_colorOth
+    line_color6 = diff6==resistance_level?line_colorRes:sup6==support_level?line_colorSup:line_colorOth
+    line_color7 = diff7==resistance_level?line_colorRes:sup7==support_level?line_colorSup:line_colorOth
+    line_color8 = diff8==resistance_level?line_colorRes:sup8==support_level?line_colorSup:line_colorOth
+    line_color9 = diff9==resistance_level?line_colorRes:sup9==support_level?line_colorSup:line_colorOth
+    line_color10 = diff10==resistance_level?line_colorRes:sup10==support_level?line_colorSup:line_colorOth
+    line_color11 = diff11==resistance_level?line_colorRes:sup11==support_level?line_colorSup:line_colorOth
+    line_color12 = diff12==resistance_level?line_colorRes:sup12==support_level?line_colorSup:line_colorOth
+    line_color13 = diff13==resistance_level?line_colorRes:sup13==support_level?line_colorSup:line_colorOth
+    line_color14 = diff14==resistance_level?line_colorRes:sup14==support_level?line_colorSup:line_colorOth
+    
+    for i = 0 to array.size(a1array) - 2 - step by step * steps_cal 
+        line.set_color(array.get(line1array, i / (step * steps_cal)), color=line_color1)
+        line.set_color(array.get(line2array, i / (step * steps_cal)), color=line_color2)
+        line.set_color(array.get(line3array, i / (step * steps_cal)), color=line_color3)
+        line.set_color(array.get(line4array, i / (step * steps_cal)), color=line_color4)
+        line.set_color(array.get(line5array, i / (step * steps_cal)), color=line_color5)
+        line.set_color(array.get(line6array, i / (step * steps_cal)), color=line_color6)
+        line.set_color(array.get(line7array, i / (step * steps_cal)), color=line_color7)
+        line.set_color(array.get(line8array, i / (step * steps_cal)), color=line_color8)
+        line.set_color(array.get(line9array, i / (step * steps_cal)), color=line_color9)
+        line.set_color(array.get(line10array, i / (step * steps_cal)), color=line_color10)
+        line.set_color(array.get(line11array, i / (step * steps_cal)), color=line_color11)
+        line.set_color(array.get(line12array, i / (step * steps_cal)), color=line_color12)
+        line.set_color(array.get(line13array, i / (step * steps_cal)), color=line_color13)
+        line.set_color(array.get(line14array, i / (step * steps_cal)), color=line_color14)
+
+
+if barstate.islastconfirmedhistory
+    label.set_xy(r1_label, x = bar_index + 1,y=math.pow(array.get(a1array, 0),lift_fact))
+    label.set_text(r1_label, text = "Top line")
+    label.set_xy(r2_label, x = bar_index + 1,y=math.pow(array.get(a2array, 0),lift_fact))
+    label.set_text(r2_label, text = "Fib: " + str.tostring(fib2))
+    label.set_xy(r3_label, x = bar_index + 1,y=math.pow(array.get(a3array, 0),lift_fact))
+    label.set_text(r3_label, text = "Fib: " + str.tostring(fib3))
+    label.set_xy(r4_label, x = bar_index + 1,y=math.pow(array.get(a4array, 0),lift_fact))
+    label.set_text(r4_label, text = "Fib: " + str.tostring(fib4))
+    label.set_xy(r5_label, x = bar_index + 1,y=math.pow(array.get(a5array, 0),lift_fact))
+    label.set_text(r5_label, text = "Fib: " + str.tostring(fib5))
+    label.set_xy(r6_label, x = bar_index + 1,y=math.pow(array.get(a6array, 0),lift_fact))
+    label.set_text(r6_label, text = "Fib: " + str.tostring(fib6))
+    label.set_xy(r7_label, x = bar_index + 1,y=math.pow(array.get(a7array, 0),lift_fact))
+    label.set_text(r7_label, text = "Fib: " + str.tostring(fib7))
+    label.set_xy(r8_label, x = bar_index + 1,y=math.pow(array.get(a8array, 0),lift_fact))
+    label.set_text(r8_label, text = "Fib: " + str.tostring(fib8))
+    label.set_xy(r9_label, x = bar_index + 1,y=math.pow(array.get(a9array, 0),lift_fact))
+    label.set_text(r9_label, text = "Fib: " + str.tostring(fib9))
+    label.set_xy(r10_label, x = bar_index + 1,y=math.pow(array.get(a10array, 0),lift_fact))
+    label.set_text(r10_label, text = "Fib: " + str.tostring(fib10))
+    label.set_xy(r11_label, x = bar_index + 1,y=math.pow(array.get(a11array, 0),lift_fact))
+    label.set_text(r11_label, text = "Fib: " + str.tostring(fib11))
+    label.set_xy(r12_label, x = bar_index + 1,y=math.pow(array.get(a12array, 0),lift_fact))
+    label.set_text(r12_label, text = "Fib: " + str.tostring(fib12))
+    label.set_xy(r13_label, x = bar_index + 1,y=math.pow(array.get(a13array, 0),lift_fact))
+    label.set_text(r13_label, text = "Fib: " + str.tostring(fib13))
+    label.set_xy(r14_label, x = bar_index + 1,y=math.pow(array.get(a14array, 0),lift_fact))
+    label.set_text(r14_label, text = "Bottom line")
+
+
+var line mark1 = line.new(na,na,na,na, width = 1,style =  line.style_arrow_both, color=color.red, extend=extend.right)
+var label txt1 = label.new(x = na, y = na, style =  label.style_none,  textcolor = color.yellow, size=size.normal, textalign = text.align_center)
+
+if barstate.islastconfirmedhistory
+    cur_lvl =  (close - math.pow(array.get(a1array, 0),lift_fact))/(math.pow(array.get(a14array, 0),lift_fact) - math.pow(array.get(a1array, 0),lift_fact))
+    line.set_xy1(mark1, x=bar_index[1]+15, y=cur_lvl)      
+    line.set_xy2(mark1, x=bar_index[1]+17, y=cur_lvl)  
+    label.set_xy(txt1, x = bar_index[0]+15,y=cur_lvl)
+    label.set_text(txt1,text=str.tostring(cur_lvl,"#.##"))
